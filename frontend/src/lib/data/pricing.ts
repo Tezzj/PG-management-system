@@ -1,0 +1,45 @@
+export const plans = [
+  {
+    name: 'Basic',
+    price: '₹999',
+    description: 'Perfect for small PG accommodations',
+    features: [
+      'Up to 10 rooms',
+      'Basic rent collection',
+      'Maintenance requests',
+      'Email support',
+    ],
+    cta: 'Start Free Trial',
+    popular: false,
+  },
+  {
+    name: 'Professional',
+    price: '₹2,499',
+    description: 'Ideal for growing PG businesses',
+    features: [
+      'Up to 50 rooms',
+      'Advanced rent collection',
+      'Maintenance tracking',
+      'Utility bill management',
+      'Priority support',
+      'Analytics dashboard',
+    ],
+    cta: 'Start Free Trial',
+    popular: true,
+  },
+  {
+    name: 'Enterprise',
+    price: 'Custom',
+    description: 'For large PG chains and organizations',
+    features: [
+      'Unlimited rooms',
+      'Custom features',
+      'API access',
+      'Dedicated support',
+      'Advanced analytics',
+      'Custom integrations',
+    ],
+    cta: 'Contact Sales',
+    popular: false,
+  },
+];

@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OWNER
+  MODERATOR
+  GUEST
+}
+
+enum PropertyType {
+  PG
+  HOSTEL
+  APARTMENT
+  HOTEL
+  OTHER
+}
+
+enum RoomStatus {
+  VACANT
+  OCCUPIED
+  MAINTENANCE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum MaintenanceStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  phone     String
+  role      UserRole
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  ownedProperties     Property[]           @relation("PropertyOwner")
+  moderatedProperties Property[]           @relation("PropertyModerator")
+  residency           Residency?
+  rentPayments        RentPayment[]
+  billShares          BillShare[]
+  announcements       Announcement[]       @relation("UserAnnouncements")
+  maintenanceRequests MaintenanceRequest[] // Tracks user-raised maintenance issues
+}
+
+model Property {
+  id           String       @id @default(cuid())
+  name         String
+  propertyType PropertyType @default(PG)
+  address      String
+  city         String
+  state        String
+  pincode      String
+  totalRooms   Int
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  // Relationships
+  owner               User                 @relation("PropertyOwner", fields: [ownerId], references: [id])
+  ownerId             String
+  moderators          User[]               @relation("PropertyModerator")
+  rooms               Room[]
+  utilityBills        UtilityBill[]
+  announcements       Announcement[]
+  maintenanceRequests MaintenanceRequest[]
+}
+
+model Room {
+  id         String     @id @default(cuid())
+  number     String
+  floor      Int
+  capacity   Int
+  status     RoomStatus @default(VACANT)
+  rentAmount Float
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  // Relationships
+  property            Property             @relation(fields: [propertyId], references: [id])
+  propertyId          String
+  residents           Residency[]
+  maintenanceRequests MaintenanceRequest[]
+}
+
+model Residency {
+  id        String    @id @default(cuid())
+  startDate DateTime
+  endDate   DateTime?
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relationships
+  resident   User   @relation(fields: [residentId], references: [id])
+  residentId String @unique
+  room       Room   @relation(fields: [roomId], references: [id])
+  roomId     String
+}
+
+model RentPayment {
+  id        String        @id @default(cuid())
+  amount    Float
+  dueDate   DateTime
+  paidDate  DateTime?
+  status    PaymentStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  // Relationships
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+}
+
+model UtilityBill {
+  id          String        @id @default(cuid())
+  type        String
+  totalAmount Float
+  billDate    DateTime
+  dueDate     DateTime
+  status      PaymentStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relationships
+  property   Property    @relation(fields: [propertyId], references: [id])
+  propertyId String
+  shares     BillShare[]
+}
+
+model BillShare {
+  id        String    @id @default(cuid())
+  amount    Float
+  paid      Boolean   @default(false)
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relationships
+  bill   UtilityBill @relation(fields: [billId], references: [id])
+  billId String
+  user   User        @relation(fields: [userId], references: [id])
+  userId String
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  createdAt DateTime @default(now())
+
+  // Relationships
+  property    Property @relation(fields: [propertyId], references: [id])
+  propertyId  String
+  createdBy   User     @relation("UserAnnouncements", fields: [createdById], references: [id])
+  createdById String
+}
+
+model MaintenanceRequest {
+  id          String            @id @default(cuid())
+  title       String
+  description String
+  status      MaintenanceStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Relationships
+  property      Property @relation(fields: [propertyId], references: [id])
+  propertyId    String
+  room          Room?    @relation(fields: [roomId], references: [id])
+  roomId        String?
+  requestedBy   User     @relation(fields: [requestedById], references: [id])
+  requestedById String
+}
